@@ -1,20 +1,25 @@
-
 name: CI - Tests et SonarQube
+
 
 on:
   push:
     branches: [main]
+
+
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
 
+
 permissions:
   contents: read
+
 
 jobs:
   quality-check:
     name: Tests et analyse qualité
     runs-on: ubuntu-latest
+
 
     steps:
       # 1. Récupération du code
@@ -23,17 +28,20 @@ jobs:
         with:
           fetch-depth: 0
 
+
       # 2. Installation de Python
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
+
       # 3. Installation des dépendances
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip install --only-binary :all: -r requirements.txt
+
 
       # 4. Tests et couverture
       - name: Run tests with coverage
@@ -44,8 +52,14 @@ jobs:
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml
 
-      # 5. Analyse SonarQube
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v8.3.0
+        uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
